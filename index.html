@@ -1,0 +1,656 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>PDFLab — We make PDF easy.</title>
+<meta name="description" content="PDFLab — Merge, Split, Compress and Convert PDFs. Free up to 10 downloads, subscribe for unlimited access." />
+<link rel="icon" href="data:,">
+<style>
+  :root{
+    --primary-navy:#0A2540;
+    --bg:#F0F4F8;
+    --surface:#FFFFFF;
+    --shadow: 0 6px 18px rgba(10,37,64,0.06);
+    --action:#007AFF;
+    --action-600:#0058d6;
+    --accent-green:#2ECC71;
+    --accent-orange:#FF9F1C;
+    --accent-purple:#7C4DFF;
+    --accent-red:#FF4D6D;
+    --text:#333333;
+    --muted:#6B7280;
+    --radius:12px;
+    --max-width:1180px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;color:var(--text);-webkit-font-smoothing:antialiased}
+  a{color:inherit}
+  .page{max-width:var(--max-width);margin:20px auto;padding:12px}
+
+  /* HEADER */
+  .header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px}
+  .header-bar{background:var(--primary-navy);color:white;border-radius:8px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;box-shadow:var(--shadow)}
+  .brand-left{display:flex;align-items:center;gap:12px}
+  .logo-box{width:56px;height:44px;border-radius:8px;background:linear-gradient(180deg,var(--action),var(--action-600));display:flex;align-items:center;justify-content:center;color:white;font-weight:800}
+  .brand-info{display:flex;flex-direction:column;justify-content:center}
+  .brand-info .title{font-weight:700}
+  .brand-info .tag{font-size:13px;color:rgba(255,255,255,0.95)}
+  .login-area{min-width:120px;text-align:right}
+  .login-btn{background:transparent;border:1px solid rgba(255,255,255,0.08);padding:8px 12px;border-radius:8px;color:white;cursor:pointer}
+
+  /* MAIN LAYOUT */
+  .main{display:grid;grid-template-columns:1fr 360px;gap:18px;margin-top:16px}
+  @media (max-width:980px){ .main{grid-template-columns:1fr} }
+
+  .panel{background:var(--surface);border-radius:10px;padding:18px;box-shadow:var(--shadow)}
+
+  /* Drop area grid: left choose; middle tool; right run */
+  .drop-area{border:2px dashed rgba(10,37,64,0.08);padding:14px;border-radius:10px;display:grid;grid-template-columns:1fr 260px 140px;gap:12px;align-items:center;transition:all .12s}
+  .drop-area.drag-enter{transform:translateY(-6px);box-shadow:0 10px 30px rgba(10,37,64,0.06);border-color:var(--action)}
+  .drop-left{}
+  .drop-left h3{margin:0;font-size:18px;font-weight:700}
+  .drop-left p{margin:6px 0 0;color:var(--muted);font-size:13px}
+  .drop-left .controls{margin-top:10px;display:flex;gap:10px;align-items:center}
+
+  /* Choose file button */
+  .choose-btn{display:inline-block;background:linear-gradient(180deg,var(--action),var(--action-600));color:white;padding:10px 14px;border-radius:10px;font-weight:700;border:none;cursor:pointer;box-shadow:0 6px 18px rgba(0,122,255,0.12)}
+  input[type=file]{display:none}
+
+  /* Tool select center */
+  .tool-select{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(10,37,64,0.06);font-size:14px}
+
+  /* Run button (right) */
+  .run-column{display:flex;align-items:center;justify-content:center}
+  .run-primary{background:linear-gradient(180deg,var(--action),var(--action-600));border:none;color:white;padding:12px 16px;border-radius:10px;font-weight:800;cursor:pointer;box-shadow:0 10px 30px rgba(0,122,255,0.12);width:100%}
+  .run-primary:hover{transform:translateY(-2px)}
+
+  /* tools grid */
+  .tools{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+  @media(max-width:720px){ .tools{grid-template-columns:1fr} }
+  .tool{display:flex;align-items:center;gap:12px;padding:14px;border-radius:10px;background:linear-gradient(180deg, rgba(10,37,64,0.02), rgba(255,255,255,0));border:1px solid rgba(10,37,64,0.04);box-shadow:0 8px 18px rgba(10,37,64,0.03);cursor:pointer;transition:transform .12s}
+  .tool:hover{transform:translateY(-6px);box-shadow:0 14px 28px rgba(10,37,64,0.06)}
+  .icon-circle{min-width:48px;min-height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:18px}
+  .tool-text{display:flex;flex-direction:column}
+  .tool-text .ttl{font-weight:700}
+  .tool-text .desc{font-size:13px;color:var(--muted)}
+
+  .icon-blue{background:linear-gradient(180deg,#4FA3FF,#007AFF)}
+  .icon-cyan{background:linear-gradient(180deg,#6FE7FF,#00D1FF)}
+  .icon-green{background:linear-gradient(180deg,#5AE19A,#2ECC71)}
+  .icon-orange{background:linear-gradient(180deg,#FFD09A,#FF9F1C)}
+  .icon-purple{background:linear-gradient(180deg,#9E88FF,#7C4DFF)}
+  .icon-red{background:linear-gradient(180deg,#FF93A1,#FF4D6D)}
+
+  /* file list */
+  .file-list{margin-top:12px}
+  .file-row{display:flex;align-items:center;justify-content:space-between;padding:10px;border-radius:8px;border:1px solid #eef2f7;margin-bottom:8px;background:#fff;cursor:move}
+  .file-left{display:flex;align-items:center;gap:10px}
+  .drag-handle{width:20px;height:20px;border-radius:6px;background:#eef4ff;display:flex;align-items:center;justify-content:center;color:var(--action);font-weight:700}
+
+  /* status + subscription row */
+  .status-row{display:flex;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap}
+  .pill{padding:6px 10px;border-radius:999px;background:rgba(10,37,64,0.04);font-weight:700;color:var(--primary-navy)}
+  .progress{flex:1;height:10px;background:rgba(10,37,64,0.06);border-radius:999px;overflow:hidden}
+  .progress-inner{height:100%;width:0;background:linear-gradient(90deg,var(--action),var(--action-600));transition:width .12s linear}
+  .sub-msg{color:var(--muted);font-size:14px}
+  .subscribe-btn{background:var(--accent-green);color:white;padding:8px 12px;border-radius:8px;border:none;cursor:pointer;font-weight:700}
+
+  /* right ad box */
+  .ad-wrap{border-radius:36px;padding:18px;background:var(--surface);box-shadow:var(--shadow);height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+  .ad-placeholder{border-radius:12px;background:#000;width:100%;min-height:220px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+  .ad-controls{margin-top:14px;text-align:center}
+  .adsense-area{width:100%;margin-top:12px}
+  .adsense-area textarea{width:100%;height:120px;border-radius:8px;padding:10px;border:1px solid rgba(10,37,64,0.06);resize:vertical}
+  .adsense-area button{margin-top:8px;padding:8px 10px;border-radius:8px;border:none;background:var(--action);color:white;cursor:pointer}
+  .adsense-code-hint{font-size:12px;color:var(--muted);margin-top:8px}
+
+  /* article & footer */
+  .article{margin-top:18px;padding:16px;background:var(--surface);border-radius:10px;box-shadow:var(--shadow);line-height:1.6}
+  footer{margin-top:16px;text-align:center;color:var(--muted);font-size:14px}
+
+  /* modal (login / signup / payment) */
+  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999}
+  .modal{background:#fff;padding:18px;border-radius:12px;max-width:520px;width:95%;box-shadow:0 24px 60px rgba(0,0,0,0.25)}
+  .modal h3{margin-top:0}
+  .form-row{margin-top:10px}
+  .form-row input{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(10,37,64,0.06)}
+  .modal .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+  .btn-primary{background:var(--action);color:white;padding:10px 12px;border-radius:8px;border:none;cursor:pointer}
+  .btn-ghost{background:#fff;border:1px solid rgba(10,37,64,0.08);padding:10px 12px;border-radius:8px;cursor:pointer}
+  .muted.small{color:var(--muted);font-size:13px}
+  code{background:#f3f4f6;padding:4px;border-radius:4px;font-size:13px}
+</style>
+</head>
+<body>
+  <div class="page">
+    <!-- header -->
+    <header class="header">
+      <div class="header-bar" style="width:100%">
+        <div class="brand-left">
+          <div class="logo-box">PL</div>
+          <div class="brand-info">
+            <div class="title">PDFLab</div>
+            <div class="tag">We make PDF easy.<br>All the tools you need to be more productive and work smarter with documents.</div>
+          </div>
+        </div>
+        <div class="login-area">
+          <button class="login-btn" id="headerLoginBtn">Login / Sign up</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- main -->
+    <main class="main">
+      <!-- left -->
+      <section>
+        <div class="panel">
+          <div style="margin-bottom:8px">
+            <h3 style="margin:0 0 6px">Drop PDF here</h3>
+            <div class="muted small">Or click Choose file(s) — then pick a tool and press Run</div>
+          </div>
+
+          <!-- drop area -->
+          <div id="dropzone" class="drop-area" ondragenter="onDragEnter(event)" ondragleave="onDragLeave(event)" ondragover="onDragOver(event)" ondrop="onDrop(event)">
+            <div class="drop-left">
+              <div style="font-weight:700">Drop files here</div>
+              <div class="muted small" style="margin-bottom:8px">PDF, JPG, PNG supported</div>
+              <div class="controls">
+                <label class="choose-btn" for="fileInput" style="cursor:pointer">Choose file(s)</label>
+                <input id="fileInput" type="file" accept=".pdf,image/*" multiple onchange="onFileSelected(event)">
+              </div>
+            </div>
+
+            <div style="display:flex;align-items:center;justify-content:center">
+              <select id="quickTool" class="tool-select">
+                <option value="merge">Merge PDF</option>
+                <option value="split">Split PDF</option>
+                <option value="compress">Compress PDF</option>
+                <option value="images2pdf">Images → PDF</option>
+                <option value="optimize">Optimize</option>
+                <option value="pdf2word">PDF → Word (server)</option>
+              </select>
+            </div>
+
+            <div class="run-column">
+              <button class="run-primary" onclick="handlePrimaryAction()">Run</button>
+            </div>
+          </div>
+
+          <!-- file list -->
+          <div id="fileList" class="file-list"></div>
+
+          <!-- tools -->
+          <div class="tools" style="margin-top:12px">
+            <div class="tool" onclick="selectToolQuick('merge')"><div class="icon-circle icon-blue">M</div><div class="tool-text"><div class="ttl">Merge PDF</div><div class="desc">Combine in order</div></div></div>
+            <div class="tool" onclick="selectToolQuick('split')"><div class="icon-circle icon-cyan">S</div><div class="tool-text"><div class="ttl">Split PDF</div><div class="desc">Extract pages</div></div></div>
+            <div class="tool" onclick="selectToolQuick('images2pdf')"><div class="icon-circle icon-green">I</div><div class="tool-text"><div class="ttl">Images → PDF</div><div class="desc">JPG/PNG to PDF</div></div></div>
+            <div class="tool" onclick="selectToolQuick('compress')"><div class="icon-circle icon-orange">C</div><div class="tool-text"><div class="ttl">Compress</div><div class="desc">Smaller files</div></div></div>
+            <div class="tool" onclick="selectToolQuick('optimize')"><div class="icon-circle icon-purple">⚡</div><div class="tool-text"><div class="ttl">Optimize</div><div class="desc">Resave</div></div></div>
+            <div class="tool" onclick="selectToolQuick('pdf2word')"><div class="icon-circle icon-red">W</div><div class="tool-text"><div class="ttl">PDF → Word</div><div class="desc">Server required</div></div></div>
+          </div>
+
+          <!-- subscription row (message + subscribe button) -->
+          <div class="status-row" style="margin-top:14px">
+            <div class="pill" id="statePill">IDLE</div>
+            <div class="progress"><div id="progressInner" class="progress-inner"></div></div>
+            <div class="sub-msg">Free up to <strong id="freeLimitCount">10</strong> PDF generations. After that subscription required (Rs 99).</div>
+            <div><button class="subscribe-btn" id="subscribeBtn">Subscribe</button></div>
+            <div><button id="downloadBtn" style="display:none;background:var(--accent-green);color:white;padding:8px 12px;border-radius:8px;border:none;cursor:pointer">Download</button></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- right: ad -->
+      <aside>
+        <div class="ad-wrap panel">
+          <!-- black placeholder left intentionally blank for later AdSense -->
+          <div id="adPlaceholder" class="ad-placeholder">Ad placeholder</div>
+
+          <div class="ad-controls">
+            <!-- kept upload option for testing, but placeholder remains black by default -->
+            <input id="adImageInput" type="file" accept="image/*" style="display:none" onchange="onAdImageSelected(event)">
+            <button class="choose-btn" onclick="document.getElementById('adImageInput').click()" style="background:linear-gradient(180deg,#ffffff,#f2f6ff);color:var(--primary-navy);border:1px solid rgba(10,37,64,0.06)">Upload Ad Image (optional)</button>
+          </div>
+
+          <div class="adsense-area">
+            <label class="muted small">Add AdSense snippet (or script) — paste &amp; click Insert (optional)</label>
+            <textarea id="adsenseCode" placeholder="Paste your AdSense snippet here (example: &lt;script async src='https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js'&gt;&lt;/script&gt; ... )"></textarea>
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <button onclick="insertAdsense()" style="flex:1;padding:8px;border-radius:8px;border:none;background:var(--action);color:white;cursor:pointer">Insert AdSense</button>
+              <button onclick="clearAd()" style="padding:8px;border-radius:8px;border:1px solid rgba(10,37,64,0.06);background:#fff;cursor:pointer">Clear</button>
+            </div>
+            <div class="adsense-code-hint">Note: do not paste active ad scripts until your domain is approved by AdSense.</div>
+          </div>
+
+          <div id="adsense-ad" style="width:100%;margin-top:12px"></div>
+        </div>
+      </aside>
+    </main>
+
+    <!-- SEO content (full text provided by you) -->
+    <article class="article" id="seoArticle">
+      <h2>All-in-one PDF Tools — Fast, Secure, Private</h2>
+      <p>PDFLab is a lightweight, powerful web toolset that helps people and teams handle PDFs quickly and securely. Whether you need to merge multiple files into a single report, extract a handful of pages, compress large scans for easy sharing, convert images to PDF or export a PDF to an editable Word document — PDFLab makes these tasks simple and reliable. Built with privacy-first principles, many tools run entirely in your browser so your files never leave your device unless you choose to upload them.</p>
+
+      <h3>Why you need a modern PDF toolbox</h3>
+      <p>PDFs are the standard format for sharing documents that must keep their layout and typography intact — from invoices and contracts to slide decks and scanned forms. But common tasks like combining documents, extracting pages, reducing file size, or converting to editable formats often require multiple apps or cumbersome workflows. A modern PDF tool consolidates these actions into a single interface so you save time and reduce errors. For businesses, good PDF tooling speeds up approvals, prepares compliant document packages, and reduces storage and bandwidth costs.</p>
+
+      <h3>Core features that matter</h3>
+      <h4>Merge PDF — Combine documents in order</h4>
+      <p>Merge multiple PDFs into one file while preserving page order and quality. Drag-and-drop files, reorder them with a simple drag handle, and create a single consolidated document for print, distribution, or archiving.</p>
+
+      <h4>Split & Extract — Get only the pages you need</h4>
+      <p>Extract selected pages or split a large PDF into smaller documents. Choose by page number, range, or visual preview. Splitting helps when you need to share a subset of a file without exposing unrelated content.</p>
+
+      <h4>Compress PDF — Reduce file size safely</h4>
+      <p>Compress scanned documents and image-heavy PDFs to make them email-friendly and faster to download. The algorithm balances file size and legibility so text and charts remain readable on mobile devices.</p>
+
+      <h4>Images → PDF — Convert photos and scans</h4>
+      <p>Turn JPG and PNG images into a PDF instantly. This is great for digitizing receipts, whiteboard photos, or printed forms. Optionally reorder images or set page orientation and size.</p>
+
+      <h4>PDF → Word (Server-backed)</h4>
+      <p>Convert PDFs to editable DOCX files using a secure server-side conversion. This is useful when you want to extract text and preserve structure for editing. Note: this feature typically requires server resources or an integrated conversion service.</p>
+
+      <h3>Privacy & security — how we protect your files</h3>
+      <p>Privacy is a top priority. PDFLab uses a hybrid model: client-side processing for common tasks so files never leave the browser, and optional secure server conversions for heavy operations. When using server conversion, uploads use HTTPS and files are removed after a short TTL.</p>
+
+      <h3>Performance & scalability</h3>
+      <p>Client-side processing handles quick jobs instantly. For enterprise needs, worker-based server conversion is recommended using job queues and scalable workers.</p>
+
+      <h3>Pricing & subscription model</h3>
+      <p>Free tier: up to 10 free PDF generations. Premium (Rs 99/month): unlimited processing, higher file size limits and priority processing. Team/enterprise tiers available on request.</p>
+
+      <h3>How to use</h3>
+      <ol>
+        <li>Add files via drag-and-drop or file picker.</li>
+        <li>Choose a tool and options.</li>
+        <li>Run and download the result.</li>
+      </ol>
+
+      <p><em>Keywords: merge pdf online, split pdf, compress pdf, pdf to word, image to pdf, secure pdf processing.</em></p>
+    </article>
+
+    <footer>© 2025 Smalllpdf AG — Made with for the people of the internet.</footer>
+  </div>
+
+  <!-- pdf-lib -->
+  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+
+  <script>
+  /************************************************************************
+   * CONFIG
+   ************************************************************************/
+  const ADSENSE_SNIPPET = ''; // <-- paste your AdSense snippet here (optional) when ready
+  const FREE_LIMIT = 10;
+  const PRICE_RS = 99;
+  const PAYMENT_CHECKOUT_URL = ''; // optional: link to real checkout server
+
+  /************************************************************************
+   * STATE
+   ************************************************************************/
+  const State = { IDLE:'IDLE', UPLOADING:'UPLOADING', PROCESSING:'PROCESSING', COMPLETED:'COMPLETED' };
+  let state = State.IDLE;
+  let selectedFiles = [];
+  let processedBlob = null;
+  let lastTool = null;
+  let dragSrc = null;
+
+  /* DOM refs */
+  const fileListEl = document.getElementById('fileList');
+  const statePill = document.getElementById('statePill');
+  const progressInner = document.getElementById('progressInner');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const freeCountEl = document.getElementById('freeLimitCount');
+  freeCountEl.innerText = FREE_LIMIT;
+
+  /************************************************************************
+   * HELPERS
+   ************************************************************************/
+  function escapeHtml(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+  function wait(ms){ return new Promise(r=>setTimeout(r,ms)); }
+  function setState(s){ state = s; statePill.innerText = s; if (s === State.IDLE){ progressInner.style.width='0%'; downloadBtn.style.display='none'; } if (s===State.COMPLETED) progressInner.style.width='100%'; }
+  function setProgress(v){ progressInner.style.width = Math.max(0,Math.min(100,v)) + '%'; }
+
+  /************************************************************************
+   * USAGE PERSISTENCE
+   ************************************************************************/
+  function getGenCount(){ return parseInt(localStorage.getItem('pdflab_gen_count')||'0',10); }
+  function incrementGenCount(){ const n = getGenCount()+1; localStorage.setItem('pdflab_gen_count', String(n)); return n; }
+  function isSubscribed(){ return localStorage.getItem('pdflab_subscribed') === 'true'; }
+  function setSubscribed(){ localStorage.setItem('pdflab_subscribed','true'); }
+  function isLoggedIn(){ return localStorage.getItem('pdflab_user') ? true : false; }
+  function setUser(obj){ localStorage.setItem('pdflab_user', JSON.stringify(obj)); }
+  function logout(){ localStorage.removeItem('pdflab_user'); alert('Logged out'); }
+
+  /************************************************************************
+   * DROPZONE - inline handlers (required by attributes)
+   ************************************************************************/
+  function onDragEnter(e){ e.preventDefault(); document.getElementById('dropzone').classList.add('drag-enter'); }
+  function onDragLeave(e){ e.preventDefault(); document.getElementById('dropzone').classList.remove('drag-enter'); }
+  function onDragOver(e){ e.preventDefault(); }
+  function onDrop(e){ e.preventDefault(); document.getElementById('dropzone').classList.remove('drag-enter'); handleFiles(e.dataTransfer.files); }
+  window.onDragEnter = onDragEnter; window.onDragLeave = onDragLeave; window.onDragOver = onDragOver; window.onDrop = onDrop;
+
+  /************************************************************************
+   * FILE HANDLING
+   ************************************************************************/
+  function onFileSelected(e){ handleFiles(e.target.files); }
+  window.onFileSelected = onFileSelected;
+
+  async function handleFiles(list){
+    if (!list || !list.length) return;
+    for (const f of Array.from(list)){
+      // accept PDF and images
+      if (!f.type || (!f.type.startsWith('application/pdf') && !f.type.startsWith('image/'))) continue;
+      try { const ab = await f.arrayBuffer(); selectedFiles.push({ file: f, name: f.name, type: f.type, arrayBuffer: ab }); } catch(err){ console.error(err); }
+    }
+    renderFileList();
+  }
+
+  /************************************************************************
+   * RENDER FILES & DRAG-REORDER
+   ************************************************************************/
+  function renderFileList(){
+    fileListEl.innerHTML = '';
+    if (!selectedFiles.length){ fileListEl.innerHTML = '<div class="muted small">No files added. Drop or choose files above.</div>'; return; }
+    selectedFiles.forEach((f, idx) => {
+      const row = document.createElement('div');
+      row.className = 'file-row';
+      row.draggable = true;
+      row.dataset.index = idx;
+      row.innerHTML = `<div class="file-left"><div class="drag-handle">☰</div><div><strong>${escapeHtml(f.name)}</strong><div class="muted small">${Math.round((f.file?.size||f.arrayBuffer?.byteLength||0)/1024)} KB</div></div></div>
+                       <div><button class="btn-ghost" onclick="removeFile(${idx})" style="background:transparent;border:1px solid rgba(10,37,64,0.06);padding:6px 8px;border-radius:8px">Remove</button></div>`;
+      row.addEventListener('dragstart', e => { dragSrc = idx; e.dataTransfer.effectAllowed = 'move'; row.style.opacity = '0.4'; });
+      row.addEventListener('dragend', e => { dragSrc = null; row.style.opacity = '1'; });
+      row.addEventListener('dragover', e => { e.preventDefault(); e.dataTransfer.dropEffect='move'; });
+      row.addEventListener('drop', e => {
+        e.preventDefault();
+        const dest = Number(row.dataset.index);
+        if (dragSrc===null || dragSrc===dest) return;
+        const item = selectedFiles.splice(dragSrc,1)[0];
+        selectedFiles.splice(dest,0,item);
+        renderFileList();
+      });
+      fileListEl.appendChild(row);
+    });
+  }
+  function removeFile(i){ selectedFiles.splice(i,1); renderFileList(); }
+  window.removeFile = removeFile;
+
+  /************************************************************************
+   * SELECT TOOL (quick)
+   ************************************************************************/
+  function selectToolQuick(tool){
+    const sel = document.getElementById('quickTool');
+    if (sel) sel.value = tool;
+    // small visual cue
+    const toolsEls = document.querySelectorAll('.tool');
+    toolsEls.forEach(el => el.style.opacity = '0.95');
+    // you could highlight selected tool — skipping complex state for simplicity
+  }
+  window.selectToolQuick = selectToolQuick;
+
+  /************************************************************************
+   * ADSENSE / AD LOGIC
+   * - By default the placeholder is a black box (no ad scripts run).
+   * - When you are ready paste your AdSense script into the textarea & click Insert.
+   ************************************************************************/
+  function onAdImageSelected(e){
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    const url = URL.createObjectURL(f);
+    // show the uploaded image (if user chooses) replacing black placeholder
+    document.getElementById('adsense-ad').innerHTML = `<img src="${url}" style="max-width:100%;border-radius:8px" alt="ad">`;
+    document.getElementById('adPlaceholder').style.display = 'none';
+  }
+  window.onAdImageSelected = onAdImageSelected;
+
+  function insertAdsense(){
+    const snippet = document.getElementById('adsenseCode').value.trim();
+    if (!snippet){ alert('Paste AdSense snippet first'); return; }
+    if (!confirm('Insert this ad script? Only paste scripts from trusted providers (e.g., Google AdSense).')) return;
+    // We will inject the snippet as-is into the adsense-ad container.
+    // NOTE: Only paste the script after your domain is approved.
+    const adArea = document.getElementById('adsense-ad');
+    adArea.innerHTML = snippet;
+    // hide black placeholder
+    document.getElementById('adPlaceholder').style.display = 'none';
+    alert('Ad code inserted. Verify in AdSense that ad loads and your domain is approved.');
+  }
+  function clearAd(){ document.getElementById('adsense-ad').innerHTML = ''; document.getElementById('adsenseCode').value = ''; document.getElementById('adPlaceholder').style.display = 'flex'; }
+  window.insertAdsense = insertAdsense;
+  window.clearAd = clearAd;
+
+  // Optionally auto-insert ADSENSE_SNIPPET on page load (if set)
+  if (typeof ADSENSE_SNIPPET !== 'undefined' && ADSENSE_SNIPPET && ADSENSE_SNIPPET.trim()){
+    window.addEventListener('DOMContentLoaded', ()=>{
+      try { document.getElementById('adsense-ad').innerHTML = ADSENSE_SNIPPET; document.getElementById('adPlaceholder').style.display = 'none'; console.log('ADSENSE_SNIPPET injected'); } catch(e){ console.warn(e); }
+    });
+  }
+
+  /************************************************************************
+   * SUBSCRIBE & AUTH FLOW (simple client-side mock)
+   ************************************************************************/
+  document.getElementById('subscribeBtn').addEventListener('click', ()=> {
+    if (!isLoggedIn()){
+      showAuthModal();
+    } else {
+      showPaymentModal();
+    }
+  });
+  document.getElementById('headerLoginBtn').addEventListener('click', ()=> showAuthModal());
+
+  function showAuthModal(){
+    const backdrop = document.createElement('div'); backdrop.className = 'modal-backdrop';
+    backdrop.innerHTML = `<div class="modal"><h3>Login / Sign up</h3>
+      <div class="form-row"><input id="authEmail" type="email" placeholder="Email address"></div>
+      <div class="form-row"><input id="authName" type="text" placeholder="Full name (for sign up)"></div>
+      <div class="form-row"><input id="authPass" type="password" placeholder="Password"></div>
+      <div class="actions"><button id="authCancel" class="btn-ghost">Cancel</button><button id="authSubmit" class="btn-primary">Continue</button></div>
+    </div>`;
+    document.body.appendChild(backdrop);
+    backdrop.querySelector('#authCancel').onclick = ()=> backdrop.remove();
+    backdrop.querySelector('#authSubmit').onclick = ()=>{
+      const email = document.getElementById('authEmail').value.trim();
+      const name = document.getElementById('authName').value.trim() || 'User';
+      const pass = document.getElementById('authPass').value;
+      if (!email || !pass){ alert('Please enter email and password'); return; }
+      setUser({ email, name, created: Date.now() });
+      backdrop.remove();
+      alert('Account created / logged in (demo).');
+      showPaymentModal();
+    };
+  }
+
+  function showPaymentModal(){
+    const backdrop = document.createElement('div'); backdrop.className = 'modal-backdrop';
+    backdrop.innerHTML = `<div class="modal"><h3>Subscribe — Rs ${PRICE_RS}</h3>
+      <p>Subscribe for unlimited PDF processing and priority features.</p>
+      <div class="form-row"><input id="cardName" placeholder="Cardholder name"></div>
+      <div class="form-row"><input id="cardNumber" placeholder="Card number (mock)"></div>
+      <div class="form-row"><input id="cardCVC" placeholder="CVC (mock)"></div>
+      <div class="actions"><button id="payCancel" class="btn-ghost">Cancel</button><button id="payNow" class="btn-primary">Pay Rs ${PRICE_RS}</button></div>
+    </div>`;
+    document.body.appendChild(backdrop);
+    backdrop.querySelector('#payCancel').onclick = ()=> backdrop.remove();
+    backdrop.querySelector('#payNow').onclick = async ()=>{
+      if (PAYMENT_CHECKOUT_URL && PAYMENT_CHECKOUT_URL.trim()){ window.location.href = PAYMENT_CHECKOUT_URL; return; }
+      const btn = backdrop.querySelector('#payNow'); btn.disabled = true; btn.innerText = 'Processing...';
+      await wait(1200);
+      setSubscribed();
+      backdrop.remove();
+      alert('Subscription activated (demo). Thank you!');
+    };
+  }
+
+  /************************************************************************
+   * SUBSCRIPTION GATING
+   ************************************************************************/
+  function ensureAllowedOrPrompt(){
+    if (isSubscribed()) return true;
+    const c = getGenCount();
+    if (c < FREE_LIMIT) return true;
+    // prompt subscribe
+    showAuthModal();
+    return false;
+  }
+
+  /************************************************************************
+   * MAIN PROCESSING (client-side pdf-lib)
+   ************************************************************************/
+  async function handlePrimaryAction(){
+    lastTool = document.getElementById('quickTool').value;
+    if (!selectedFiles.length){ alert('Please add at least one file'); return; }
+    if (!ensureAllowedOrPrompt()) return;
+
+    try {
+      setState(State.UPLOADING);
+      await animateProgress(0,25,500);
+      setState(State.PROCESSING);
+
+      if (lastTool === 'merge'){
+        const pdfs = selectedFiles.filter(f => (f.type && f.type.includes('pdf')) || f.name.toLowerCase().endsWith('.pdf'));
+        if (!pdfs.length) throw new Error('No PDFs selected');
+        processedBlob = await mergePdfs(pdfs);
+      } else if (lastTool === 'split'){
+        const pages = prompt('Enter pages to extract (0-based, e.g. 0-2,4):','0-0');
+        const pageArr = parsePages(pages || '');
+        if (!pageArr.length) throw new Error('No pages provided');
+        const pdf = selectedFiles.find(f => (f.type && f.type.includes('pdf')) || f.name.toLowerCase().endsWith('.pdf'));
+        if (!pdf) throw new Error('No PDF selected for split');
+        processedBlob = await splitPdf(pdf, pageArr);
+      } else if (lastTool === 'images2pdf'){
+        const imgs = selectedFiles.filter(f => f.type && f.type.startsWith('image/'));
+        if (!imgs.length) throw new Error('No images selected');
+        processedBlob = await imagesToPdf(imgs);
+      } else if (lastTool === 'compress' || lastTool === 'optimize'){
+        const pdfs = selectedFiles.filter(f => (f.type && f.type.includes('pdf')) || f.name.toLowerCase().endsWith('.pdf'));
+        if (!pdfs.length) throw new Error('No PDFs selected');
+        if (pdfs.length === 1){
+          const doc = await PDFLib.PDFDocument.load(pdfs[0].arrayBuffer);
+          // simple "compress" by re-saving (pdf-lib won't hugely compress but resaves)
+          const bytes = await doc.save({ useObjectStreams:true });
+          processedBlob = new Blob([bytes], { type: 'application/pdf' });
+        } else {
+          processedBlob = await mergePdfs(pdfs);
+        }
+      } else if (lastTool === 'pdf2word'){
+        alert('PDF→Word requires a server — see server integration docs.');
+        setState(State.IDLE);
+        return;
+      } else {
+        processedBlob = selectedFiles[0].file.slice(0, selectedFiles[0].file.size, selectedFiles[0].file.type);
+      }
+
+      await animateProgress(25,100,900);
+      setState(State.COMPLETED);
+      document.getElementById('downloadBtn').style.display = 'inline-block';
+
+      if (!isSubscribed()){
+        const n = incrementGenCount();
+        if (n >= FREE_LIMIT){
+          // prompt subscribe after free limit reached
+          setTimeout(()=> showAuthModal(), 600);
+        }
+      }
+    } catch (err){
+      console.error(err);
+      alert('Error: ' + (err.message || err));
+      setState(State.IDLE);
+    }
+  }
+  window.handlePrimaryAction = handlePrimaryAction;
+
+  /************************************************************************
+   * pdf-lib helpers
+   ************************************************************************/
+  async function mergePdfs(pdfs){
+    const merged = await PDFLib.PDFDocument.create();
+    for (const p of pdfs){
+      const src = await PDFLib.PDFDocument.load(p.arrayBuffer);
+      const copied = await merged.copyPages(src, src.getPageIndices());
+      copied.forEach(pg => merged.addPage(pg));
+      await wait(40);
+    }
+    const bytes = await merged.save({ useObjectStreams:true });
+    return new Blob([bytes], { type: 'application/pdf' });
+  }
+  async function splitPdf(pdfObj, pagesArr){
+    const src = await PDFLib.PDFDocument.load(pdfObj.arrayBuffer);
+    const dst = await PDFLib.PDFDocument.create();
+    const max = src.getPageCount();
+    const valid = pagesArr.filter(n => n >= 0 && n < max);
+    if (!valid.length) throw new Error('No valid pages');
+    const copied = await dst.copyPages(src, valid);
+    copied.forEach(p => dst.addPage(p));
+    const bytes = await dst.save({ useObjectStreams:true });
+    return new Blob([bytes], { type: 'application/pdf' });
+  }
+  async function imagesToPdf(imgFiles){
+    const doc = await PDFLib.PDFDocument.create();
+    for (const f of imgFiles){
+      const uint8 = new Uint8Array(f.arrayBuffer);
+      let img;
+      try {
+        if (f.type === 'image/png' || f.name.toLowerCase().endsWith('.png')) img = await doc.embedPng(uint8);
+        else img = await doc.embedJpg(uint8);
+      } catch(e){
+        console.warn('embed image failed', e);
+        continue;
+      }
+      const page = doc.addPage([img.width, img.height]);
+      page.drawImage(img, { x:0, y:0, width: img.width, height: img.height });
+      await wait(20);
+    }
+    const bytes = await doc.save({ useObjectStreams:true });
+    return new Blob([bytes], { type: 'application/pdf' });
+  }
+
+  /* utilities */
+  function parsePages(input){
+    if (!input) return [];
+    const parts = input.split(',').map(s=>s.trim()).filter(Boolean);
+    const out = new Set();
+    for (const p of parts){
+      if (p.includes('-')){
+        const [a,b] = p.split('-').map(x=>parseInt(x,10));
+        if (!isNaN(a) && !isNaN(b)) for (let i=a;i<=b;i++) out.add(i);
+      } else {
+        const n = parseInt(p,10);
+        if (!isNaN(n)) out.add(n);
+      }
+    }
+    return Array.from(out).sort((a,b)=>a-b);
+  }
+  async function animateProgress(from,to,dur){
+    const start = performance.now();
+    return new Promise(resolve => {
+      function frame(now){
+        const t = Math.min(1,(now-start)/dur);
+        const v = Math.round(from + (to-from)*t);
+        setProgress(v);
+        if (t < 1) requestAnimationFrame(frame);
+        else resolve();
+      }
+      requestAnimationFrame(frame);
+    });
+  }
+  function setProgress(v){ progressInner.style.width = Math.max(0,Math.min(100,v)) + '%'; }
+  function showDownload(){ document.getElementById('downloadBtn').style.display = 'inline-block'; }
+
+  function downloadProcessed(){
+    if (!processedBlob){ alert('No result available'); return; }
+    const name = `pdflab-${(lastTool||'result')}-${Date.now()}.pdf`;
+    const url = URL.createObjectURL(processedBlob);
+    const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 1500);
+  }
+  document.getElementById('downloadBtn').addEventListener('click', downloadProcessed);
+
+  /* init */
+  setState(State.IDLE);
+  renderFileList();
+  </script>
+</body>
+</html>
